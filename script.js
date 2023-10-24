@@ -45,10 +45,12 @@ class App{
     #map;
     #mapEvent;
     #plans = [];
+    #mapZoomLevel =13;
 
     constructor(){
         this._getPosition();
         form.addEventListener('submit',this._newPlan.bind(this));
+        containerPlans.addEventListener("click",this._moveToPin.bind(this));
     }
     _getPosition(){
         if(navigator.geolocation){
@@ -62,7 +64,7 @@ class App{
         const coords = [latitude, longitude];
         // console.log(`https://www.google.com/maps/@${latitude},${longitude}`);
         
-        this.#map = L.map('map').setView(coords, 13);
+        this.#map = L.map('map').setView(coords, this.#mapZoomLevel);
         
         L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -91,7 +93,8 @@ class App{
         
         // Data validation
         if(!Number.isFinite(duration) || duration<=0)  return alert("Entered Duration is not valid!");
-
+        if(note == "") return alert("Note is empty! Please enter valid note");
+        
         // Pushing new plan to plans array
         const plan = new Plan(type,[lat,lng],note,duration);
         this.#plans.push(plan);
@@ -123,11 +126,30 @@ class App{
         `;
         form.insertAdjacentHTML('afterend', htmls);
         }
+
     }
 
     _failureInPosition(){
         alert("could not get your position!");
     }
+
+    _moveToPin(ev){
+        const planElem = ev.target.closest(".workout");
+        console.log(planElem);
+        if(!planElem)   return;
+
+        const pln = this.#plans.find(
+            pl => pl.id === planElem.dataset.id
+        )
+        console.log(pln);
+
+        this.#map.setView(pln.coords, this.#mapZoomLevel, {
+            animate : true,
+            pan : {duration: 1}
+        })
+
+    }
+
 }
 
 const app = new App();
